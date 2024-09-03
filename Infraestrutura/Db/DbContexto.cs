@@ -7,6 +7,7 @@ public class DbContexto : DbContext
 {
     private readonly IConfiguration _configuration;
     public DbSet<Administrador> Administradores { get; set; } = default!;
+    public DbSet<Veiculo> Veiculos { get; set; } = default!;
 
     public DbContexto(IConfiguration configuration)
     {
