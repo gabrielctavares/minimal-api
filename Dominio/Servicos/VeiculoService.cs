@@ -37,7 +37,7 @@ public class VeiculoService : IVeiculoService
         return _dbContexto.Veiculos.Find(id);
     }
 
-    public List<Veiculo> Todos(int pagina = 1, string? nome = null, string? marca = null)
+    public List<Veiculo> Todos(int? pagina = 1, string? nome = null, string? marca = null)
     {
         var query = _dbContexto.Veiculos.AsQueryable();
 
@@ -48,7 +48,10 @@ public class VeiculoService : IVeiculoService
             query = query.Where(x => x.Marca.ToLower().Contains(marca));
 
         int quantidadePorPagina = 10;
-        query = query.Skip((pagina - 1) * quantidadePorPagina).Take(quantidadePorPagina);
+
+        if(pagina is not null)
+            query = query.Skip(((int)pagina - 1) * quantidadePorPagina).Take(quantidadePorPagina);
+            
         return query.ToList();
     }
 }
