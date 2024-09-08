@@ -1,6 +1,7 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -120,6 +121,7 @@ app.MapGet("/administradores", ([FromQuery] int? pagina, IAdministradorService s
     }
     return Results.Ok(adms);
 })
+.RequireAuthorization(new AuthorizeAttribute{ Roles = "Adm"})
 .RequireAuthorization()
 .WithTags("Administradores");
 
@@ -132,6 +134,7 @@ app.MapGet("/Administradores/{id}", ([FromRoute] int id, IAdministradorService s
             Perfil = administrador.Perfil
     });
 })
+.RequireAuthorization(new AuthorizeAttribute{ Roles = "Adm"})
 .RequireAuthorization()
 .WithTags("Administradores");
 
@@ -165,6 +168,7 @@ app.MapPost("/administradores", ([FromBody] AdministradorDTO administradorDTO, I
     });
     
 })
+.RequireAuthorization(new AuthorizeAttribute{ Roles = "Adm"})
 .RequireAuthorization()
 .WithTags("Administradores");
 #endregion  
@@ -220,6 +224,7 @@ app.MapGet("/veiculos/{id}", ([FromServices] IVeiculoService service, [FromRoute
 
     return Results.Ok(veiculo);
 })
+.RequireAuthorization(new AuthorizeAttribute{ Roles = "Adm,Editor"})
 .RequireAuthorization()
 .WithTags("Veiculos");
 
@@ -240,6 +245,7 @@ app.MapPut("/veiculos/{id}", ([FromBody] VeiculoDTO veiculoDTO, [FromServices] I
 
     return Results.Ok(veiculo);
 })
+.RequireAuthorization(new AuthorizeAttribute{ Roles = "Adm"})
 .RequireAuthorization()
 .WithTags("Veiculos");
 
@@ -252,6 +258,7 @@ app.MapDelete("/veiculos/{id}", ([FromServices] IVeiculoService service, int id)
     service.Excluir(veiculo);
     return Results.NoContent();
 })
+.RequireAuthorization(new AuthorizeAttribute{ Roles = "Adm"})
 .RequireAuthorization()
 .WithTags("Veiculos");
 #endregion
