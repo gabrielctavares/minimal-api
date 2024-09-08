@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
 using MinimalApi.Dominio.DTOs;
 using MinimalApi.Dominio.Entidades;
 using MinimalApi.Dominio.Enuns;
@@ -27,7 +28,9 @@ builder.Services.AddAuthentication(options =>
 {
     option.TokenValidationParameters = new TokenValidationParameters
     {
-        ValidateLifetime = true,        
+        ValidateLifetime = true,  
+        ValidateAudience = false,   
+        ValidateIssuer = false,   
         IssuerSigningKey = new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(key))
     };
 });
@@ -35,7 +38,27 @@ builder.Services.AddScoped<IAdministradorService, AdministradorService>();
 builder.Services.AddScoped<IVeiculoService, VeiculoService>();
 
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(options => {
+    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme {
+        Name = "Authorization",
+        Type = SecuritySchemeType.Http,
+        Scheme = "bearer",
+        BearerFormat = "JWT",
+        In = ParameterLocation.Header,        
+        Description = "Insira o Token JWT aqui"
+    });
+    options.AddSecurityRequirement(new OpenApiSecurityRequirement {
+        {
+            new OpenApiSecurityScheme {
+                Reference = new OpenApiReference {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            Array.Empty<string>()
+        } 
+    });
+});
 builder.Services.AddAuthorization();
 
 builder.Services.AddDbContext<DbContexto>(options =>
@@ -47,7 +70,9 @@ var app = builder.Build();
 #endregion
 
 #region Home
-app.MapGet("/", () => Results.Json(new Home())).WithTags("Home");;
+app.MapGet("/", () => Results.Json(new Home()))
+.AllowAnonymous()
+.WithTags("Home");
 #endregion
 
 #region Administradores
@@ -73,8 +98,14 @@ string GerarTokenJWT(Administrador administrador){
 app.MapPost("/administradores/login", ([FromBody] LoginDTO login, IAdministradorService service) =>
 {
     var administrador = service.Login(login);
-    return administrador is not null ? Results.Ok(administrador) : Results.Unauthorized();
-}).WithTags("Administradores");
+    if(administrador is null) 
+        return Results.Unauthorized();
+    
+    var token = GerarTokenJWT(administrador);
+    return Results.Ok(new AdministradorLogado(administrador.Email, administrador.Perfil, token));
+})
+.AllowAnonymous()
+.WithTags("Administradores");
 
 app.MapGet("/administradores", ([FromQuery] int? pagina, IAdministradorService service) => {
     var adms = new List<AdministradorModelView>();
