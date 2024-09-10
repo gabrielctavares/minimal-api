@@ -12,6 +12,7 @@ public class AdministradorServiceTest
 {
     private DbContexto CriarContextoDeTeste()
     {
+        
         var assemblyPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
         var path = Path.GetFullPath(Path.Combine(assemblyPath ?? "", "..", "..", ".."));
 
@@ -22,7 +23,11 @@ public class AdministradorServiceTest
 
         var configuration = builder.Build();
 
-        return new DbContexto(configuration);
+        var options = new DbContextOptionsBuilder<DbContexto>()
+            .UseSqlServer(configuration.GetConnectionString("DefaultConnection"))
+            .Options;
+
+        return new DbContexto(options);
     }
 
 

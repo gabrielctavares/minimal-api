@@ -5,27 +5,11 @@ namespace MinimalApi.Infraestrutura.Db;
 
 public class DbContexto : DbContext
 {
-    private readonly IConfiguration _configuration;
     public DbSet<Administrador> Administradores { get; set; } = default!;
     public DbSet<Veiculo> Veiculos { get; set; } = default!;
 
-    public DbContexto(IConfiguration configuration)
+    public DbContexto(DbContextOptions<DbContexto> options) : base(options)
     {
-        _configuration = configuration;
-    }
-
-    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-    {
-        if (optionsBuilder.IsConfigured)
-            return;
-
-
-        var stringConexao = _configuration.GetConnectionString("DefaultConnection");
-        if (!string.IsNullOrEmpty(stringConexao))
-        {
-            optionsBuilder.UseSqlServer(stringConexao);                    
-        }
-        
     }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)

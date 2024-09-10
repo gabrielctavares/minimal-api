@@ -9,6 +9,7 @@ using Microsoft.OpenApi.Models;
 using MinimalApi.Dominio.DTOs;
 using MinimalApi.Dominio.Entidades;
 using MinimalApi.Dominio.Enuns;
+using MinimalApi.Dominio.Helpers;
 using MinimalApi.Dominio.Interfaces;
 using MinimalApi.Dominio.ModelViews;
 using MinimalApi.Dominio.Servicos;
@@ -77,24 +78,6 @@ app.MapGet("/", () => Results.Json(new Home()))
 #endregion
 
 #region Administradores
-string GerarTokenJWT(Administrador administrador){
-    var securityKey = new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(key));
-    var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
-
-    var token = new JwtSecurityToken(
-        expires: DateTime.Now.AddDays(1),
-        issuer: "minimalapi",
-        audience: "minimalapi",
-        claims: new[] {
-            new Claim(ClaimTypes.Email, administrador.Email),
-            new Claim(ClaimTypes.Role, administrador.Perfil),
-            new Claim("Perfil", administrador.Perfil),
-        },
-        signingCredentials: credentials
-    );
-
-    return new JwtSecurityTokenHandler().WriteToken(token);
-}
 
 app.MapPost("/administradores/login", ([FromBody] LoginDTO login, IAdministradorService service) =>
 {
@@ -102,7 +85,7 @@ app.MapPost("/administradores/login", ([FromBody] LoginDTO login, IAdministrador
     if(administrador is null) 
         return Results.Unauthorized();
     
-    var token = GerarTokenJWT(administrador);
+    var token = Helpers.GerarTokenJWT(administrador, key);
     return Results.Ok(new AdministradorLogado(administrador.Email, administrador.Perfil, token));
 })
 .AllowAnonymous()
@@ -143,6 +126,8 @@ app.MapPost("/administradores", ([FromBody] AdministradorDTO administradorDTO, I
         Mensagens = new List<string>()
     };
 
+    if(string.IsNullOrEmpty(administradorDTO.Nome))
+        validacao.Mensagens.Add("Nome não pode ser vazio");
     if(string.IsNullOrEmpty(administradorDTO.Email))
         validacao.Mensagens.Add("Email não pode ser vazio");
     if(string.IsNullOrEmpty(administradorDTO.Senha))
@@ -154,6 +139,7 @@ app.MapPost("/administradores", ([FromBody] AdministradorDTO administradorDTO, I
         return Results.BadRequest(validacao);
     
     var administrador = new Administrador{
+        Nome = administradorDTO.Nome,
         Email = administradorDTO.Email,
         Senha = administradorDTO.Senha,
         Perfil = administradorDTO.Perfil.ToString() ?? Perfil.Editor.ToString()
