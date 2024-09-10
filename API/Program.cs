@@ -272,3 +272,6 @@ app.UseAuthorization();
 
 app.Run();
 #endregion
+
+
+public partial class Program { } // Torna a classe acessível
